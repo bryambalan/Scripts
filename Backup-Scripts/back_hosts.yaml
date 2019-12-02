@@ -1,0 +1,169 @@
+---
+############################
+### Cisco Small Business ###
+############################
+- name: Get config from all Cisco small business devices
+  hosts: IOSSB
+  gather_facts: no
+
+  tasks:
+    - name: Collect Show run from all routers
+      raw: "show run"
+
+      register: RUNCFG
+
+    - set_fact: time="{{lookup('pipe','date \"+%Y-%m-%d-%H-%M\"')}}"
+
+    - name: save output to a file
+      connection: local
+      copy:
+        content="\n ===show run=== \n {{ RUNCFG.stdout }}"
+        dest="/etc/ansible/backups/IOSSB/{{ inventory_hostname }}_run_cfg_{{ time }}.txt"
+
+#################################
+### Ubiquiti EdgeOS and Unifi ###
+#################################
+- name: Get config from all Ubiquiti EdgeOS devices
+  hosts: EdgeOS
+  connection: network_cli
+  gather_facts: no
+
+  tasks:
+    - name: Collect configuration
+      edgeos_command:
+        commands: show configuration
+
+      register: RUNCFG
+
+    - name: Collect configuration commands
+      edgeos_command:
+        commands: show configuration commands
+
+      register: RUNCFG2
+
+    - set_fact: time="{{lookup('pipe','date \"+%Y-%m-%d-%H-%M\"')}}"
+
+    - name: save output to a file
+      connection: local
+      copy:
+        content="===show configuration===\n{{ RUNCFG.stdout|join('\n') }}\n===show configuration commands===\n{{ RUNCFG2.stdout|join('\n') }}\n"
+        dest="/etc/ansible/backups/EdgeOS/{{ inventory_hostname }}_run_cfg_{{ time }}.txt"
+
+############
+### VyOS ###
+############
+- name: Get config from all VyOS devices
+  hosts: VyOS
+  connection: network_cli
+  gather_facts: no
+
+  tasks:
+    - name: Collect configuration
+      vyos_command:
+        commands: show configuration
+
+      register: RUNCFG
+
+    - name: Collect configuration commands
+      vyos_command:
+        commands: show configuration commands
+
+      register: RUNCFG2
+
+    - set_fact: time="{{lookup('pipe','date \"+%Y-%m-%d-%H-%M\"')}}"
+
+    - name: save output to a file
+      connection: local
+      copy:
+        content="===show configuration===\n{{ RUNCFG.stdout|join('\n') }}\n===show configuration commands===\n{{ RUNCFG2.stdout|join('\n') }}\n"
+        dest="/etc/ansible/backups/VyOS/{{ inventory_hostname }}_run_cfg_{{ time }}.txt"
+
+#########################
+### Cisco classic IOS ###
+#########################
+- name: Get config from all Cisco IOS devices
+  hosts: IOS
+  gather_facts: no
+
+  tasks:
+    - name: Collect Show run from all routers
+      raw: "show run"
+
+      register: RUNCFG
+
+    - set_fact: time="{{lookup('pipe','date \"+%Y-%m-%d-%H-%M\"')}}"
+
+    - name: save output to a file
+      connection: local
+      copy:
+        content="\n ===show run=== \n {{ RUNCFG.stdout }}"
+        dest="/etc/ansible/backups/IOS/{{ inventory_hostname }}_run_cfg_{{ time }}.txt"
+
+################
+### RouterOS ###
+################
+- name: Get config from all Mikrotik RouterOS devices
+  hosts: RouterOS
+  connection: network_cli
+  gather_facts: no
+
+  tasks:
+    - name: Collect system package print detail output
+      routeros_command:
+        commands: system package print detail without-paging
+
+      register: SYSPKGDTL
+
+    - name: Collect system routerboard print output
+      routeros_command:
+        commands: system routerboard print
+
+      register: SYSRTRBRD
+
+    - name: Collect system license print output
+      routeros_command:
+        commands: system license print
+
+      register: SYSLIC
+
+    - name: Export configuration commands
+      routeros_command:
+        commands: export
+
+      register: EXPORT
+
+    - set_fact: time="{{lookup('pipe','date \"+%Y-%m-%d-%H-%M\"')}}"
+
+    - name: save output to a file
+      connection: local
+      copy:
+        content="===system package print detail===\n{{ SYSPKGDTL.stdout|join('\n') }}\n===system routerboard print===\n{{ SYSRTRBRD.stdout|join('\n') }}\n===system license print===\n{{ SYSLIC.stdout|join('\n') }}\n===export configuration===\n{{ EXPORT.stdout|join('\n') }}\n"
+        dest="/etc/ansible/backups/RouterOS/{{ inventory_hostname }}_run_cfg_{{ time }}.txt"
+
+################
+###  Huawei  ###
+################
+- hosts: Huawei
+  gather_facts: no
+  connection: local
+
+  vars:
+    ansible_network_os: ce_config
+  tasks:
+  - name: "Backup_Huawei"
+    ce_config:
+      backup: yes
+
+################
+### Juniper  ###
+################
+- hosts: Juniper
+  gather_facts: no
+  connection: local
+
+  vars:
+    ansible_network_os: junos_config
+  tasks:
+  - name: "Backup_Juniper"
+    junos_config:
+      backup: yes
